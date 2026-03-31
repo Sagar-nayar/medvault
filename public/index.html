@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MedVault — Zero Trust Patient Access</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🔐</text></svg>" />
+  <link rel="stylesheet" href="/css/main.css" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════
+       LOGIN SCREEN
+  ══════════════════════════════════════ -->
+  <div id="login-screen" class="screen active">
+    <div class="login-bg">
+      <div class="bg-grid"></div>
+      <div class="bg-glow"></div>
+    </div>
+    <div class="login-wrap">
+      <div class="login-card">
+
+        <div class="login-brand">
+          <span class="brand-dot"></span>
+          <span class="brand-name">MEDVAULT</span>
+          <span class="brand-ver">v1.0.0</span>
+        </div>
+
+        <h1 class="login-title">Zero Trust<br><em>Patient Access</em></h1>
+        <p class="login-sub">// Authenticate with your role — access is scoped to minimum necessary data</p>
+
+        <div class="role-grid" id="role-grid">
+          <!-- populated by login.js -->
+        </div>
+
+        <div class="field-wrap">
+          <label class="field-label">TREATMENT CONTEXT</label>
+          <input id="context-input" class="field-input" type="text"
+                 placeholder="e.g. Broken arm — ER trauma, Blood pressure check…" />
+        </div>
+
+        <button class="btn-login" id="login-btn" disabled>
+          <span id="login-btn-text">SELECT A ROLE TO CONTINUE</span>
+          <span class="btn-arrow">→</span>
+        </button>
+
+        <p class="login-note">ACUCyS × DSEC Hackathon 2026 &nbsp;·&nbsp; All access is logged and audited</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       DASHBOARD SCREEN
+  ══════════════════════════════════════ -->
+  <div id="dashboard-screen" class="screen">
+
+    <header class="topbar">
+      <div class="tb-left">
+        <span class="tb-logo">MEDVAULT</span>
+        <span class="tb-divider"></span>
+        <span class="role-badge" id="role-badge"></span>
+      </div>
+      <div class="tb-center">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input id="patient-search" class="search-input" type="text" placeholder="Search patients…" />
+        </div>
+      </div>
+      <div class="tb-right">
+        <div class="session-meta" id="session-meta"></div>
+        <button class="tb-btn" id="audit-btn">📋 Audit Log</button>
+        <button class="tb-btn tb-danger" id="logout-btn">Logout</button>
+      </div>
+    </header>
+
+    <div class="app-body">
+
+      <!-- Patient list sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-head">
+          <span class="sidebar-title">PATIENTS</span>
+          <span class="sidebar-count" id="sidebar-count">0</span>
+        </div>
+        <div class="patient-list" id="patient-list"></div>
+      </aside>
+
+      <!-- Patient record main area -->
+      <main class="main-area">
+        <div class="empty-state" id="empty-state">
+          <div class="empty-icon">🔐</div>
+          <div class="empty-title">Select a patient</div>
+          <div class="empty-sub">Choose a patient from the list to view their scoped record</div>
+        </div>
+        <div id="patient-view" class="hidden"></div>
+      </main>
+
+      <!-- Audit log drawer -->
+      <aside class="audit-drawer" id="audit-drawer">
+        <div class="audit-head">
+          <div class="audit-label"><span class="audit-dot"></span>LIVE ACCESS LOG</div>
+          <button class="audit-close" id="audit-close">✕</button>
+        </div>
+        <div class="audit-stats" id="audit-stats"></div>
+        <div class="audit-feed"  id="audit-feed"></div>
+      </aside>
+
+    </div>
+  </div>
+
+  <!-- Scripts (order matters) -->
+  <script src="/js/api.js"></script>
+  <script src="/js/login.js"></script>
+  <script src="/js/patient.js"></script>
+  <script src="/js/audit.js"></script>
+  <script src="/js/dashboard.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
