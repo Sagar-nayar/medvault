@@ -76,7 +76,7 @@ function renderList(patients) {
 // one click handler on the list instead of inline onclick="" (inline js is blocked by our CSP)
 document.getElementById('patient-list').addEventListener('click', e => {
   const item = e.target.closest('.p-item');
-  if (item) loadPatient(item.dataset.id);
+  if (item) loadPatient(item.dataset.id).catch(err => console.error('patient failed to load', err));
 });
 
 function resetDashboard() {
