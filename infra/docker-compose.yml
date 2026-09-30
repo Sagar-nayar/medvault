@@ -6,6 +6,7 @@ services:
     build: ./jenkins
     image: medvault-jenkins:local
     container_name: jenkins
+    dns: [8.8.8.8, 1.1.1.1]
     # root is needed to use the docker socket on Docker Desktop.
     # fine for a local lab, in a real company you'd use a dedicated build agent instead
     user: root
