@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   MEDVAULT  —  Zero Trust Patient Access System
+   MEDVAULT  -  Zero Trust Patient Access System
    Design System & Full Stylesheet
 ═══════════════════════════════════════════════════════════ */
 
@@ -291,7 +291,7 @@ input  { font-family: inherit; }
 
 
 /* ═══════════════════════════════════════════════════════════
-   SIDEBAR — patient list
+   SIDEBAR - patient list
 ═══════════════════════════════════════════════════════════ */
 .sidebar {
   border-right: 1px solid var(--b1);
@@ -609,3 +609,16 @@ input  { font-family: inherit; }
   95%  { opacity: 1; }
   100% { top: 100vh; opacity: 0; }
 }
+/* env pill: shows which env + build version is running */
+.env-pill {
+  margin-left: 10px;
+  padding: 3px 8px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font-family: var(--mono, monospace);
+  font-size: 10px;
+  letter-spacing: .08em;
+  color: #8a94a6;
+}
+.env-pill[data-env="production"] { color: #00e87a; }
+.env-pill[data-env="staging"]    { color: #ffaa00; }

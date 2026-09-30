@@ -1,5 +1,5 @@
 /**
- * Login screen — role selection + authentication
+ * Login screen - role selection + authentication
  */
 
 const ROLE_DEFS = {
@@ -11,7 +11,7 @@ const ROLE_DEFS = {
 };
 
 const DEFAULT_CONTEXTS = {
-  er_doctor:    'Trauma assessment — broken arm',
+  er_doctor:    'Trauma assessment - broken arm',
   nurse:        'Routine blood pressure check',
   admin:        'Appointment scheduling',
   psychiatrist: 'Therapy session review',
@@ -71,7 +71,7 @@ async function doLogin() {
     }
   } catch {
     btn.disabled = false;
-    document.getElementById('login-btn-text').textContent = 'AUTHENTICATION FAILED — RETRY';
+    document.getElementById('login-btn-text').textContent = 'AUTHENTICATION FAILED - RETRY';
   }
 }
 

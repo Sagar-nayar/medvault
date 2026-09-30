@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MedVault — Zero Trust Patient Access</title>
+  <title>MedVault - Zero Trust Patient Access</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🔐</text></svg>" />
   <link rel="stylesheet" href="/css/main.css" />
 </head>
@@ -23,11 +23,11 @@
         <div class="login-brand">
           <span class="brand-dot"></span>
           <span class="brand-name">MEDVAULT</span>
-          <span class="brand-ver">v1.0.0</span>
+          <span class="brand-ver" id="brand-ver">v1.1.0</span>
         </div>
 
         <h1 class="login-title">Zero Trust<br><em>Patient Access</em></h1>
-        <p class="login-sub">// Authenticate with your role — access is scoped to minimum necessary data</p>
+        <p class="login-sub">// Authenticate with your role - access is scoped to minimum necessary data</p>
 
         <div class="role-grid" id="role-grid">
           <!-- populated by login.js -->
@@ -36,7 +36,7 @@
         <div class="field-wrap">
           <label class="field-label">TREATMENT CONTEXT</label>
           <input id="context-input" class="field-input" type="text"
-                 placeholder="e.g. Broken arm — ER trauma, Blood pressure check…" />
+                 placeholder="e.g. Broken arm - ER trauma, Blood pressure check…" />
         </div>
 
         <button class="btn-login" id="login-btn" disabled>
@@ -59,6 +59,7 @@
         <span class="tb-logo">MEDVAULT</span>
         <span class="tb-divider"></span>
         <span class="role-badge" id="role-badge"></span>
+        <span class="env-pill" id="env-pill" title="Deployment environment and build version"></span>
       </div>
       <div class="tb-center">
         <div class="search-wrap">

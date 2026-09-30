@@ -1,6 +1,6 @@
 /**
  * MedVault API Client
- * Thin fetch wrapper — all HTTP calls live here.
+ * Thin fetch wrapper - all HTTP calls live here.
  */
 const API = {
   async _get(url) {

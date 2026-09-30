@@ -47,7 +47,7 @@ const SURGERIES = [
 
 const IMAGING = [
   { type: 'X-Ray', region: 'Chest',          finding: 'No acute cardiopulmonary disease'              },
-  { type: 'X-Ray', region: 'Left Arm',        finding: 'Distal radius fracture — undisplaced'          },
+  { type: 'X-Ray', region: 'Left Arm',        finding: 'Distal radius fracture - undisplaced'          },
   { type: 'CT',    region: 'Abdomen/Pelvis',  finding: 'No acute intra-abdominal pathology'            },
   { type: 'MRI',   region: 'Lumbar Spine',    finding: 'L4/L5 disc bulge with mild foraminal narrowing'},
   { type: 'Echo',  region: 'Cardiac',         finding: 'Normal LV function, EF 62%'                   },
@@ -55,10 +55,10 @@ const IMAGING = [
 ];
 
 const ADMISSION_REASONS = [
-  'Fractured radius — trauma', 'Chest pain evaluation', 'Hypertensive crisis',
+  'Fractured radius - trauma', 'Chest pain evaluation', 'Hypertensive crisis',
   'Routine blood pressure check', 'Post-operative review', 'Diabetic ketoacidosis',
-  'Asthma exacerbation', 'Fall — query hip fracture', 'Acute back pain',
-  'Elective pre-op assessment', 'Cellulitis — left leg', 'UTI with systemic features',
+  'Asthma exacerbation', 'Fall - query hip fracture', 'Acute back pain',
+  'Elective pre-op assessment', 'Cellulitis - left leg', 'UTI with systemic features',
 ];
 
 const WARDS = ['4B', '2A', '3C', 'ED', 'ICU', 'Psych Unit', 'Surgical', 'HDU'];
@@ -73,6 +73,11 @@ const PSYCH_NOTES = [
   'Session focused on grounding techniques. No acute risk identified.',
   'Patient engaged well. Exploring relationship patterns through schema therapy.',
 ];
+
+// aussie mobile number like 0412 345 678
+function mobile() {
+  return `04${faker.string.numeric(2)} ${faker.string.numeric(3)} ${faker.string.numeric(3)}`;
+}
 
 function pick(arr) {
   return faker.helpers.arrayElement(arr);
@@ -145,14 +150,14 @@ export function generatePatients(count = 20) {
       sex:  sex === 'male' ? 'M' : 'F',
 
       // Admin fields
-      phone:     faker.phone.number('04## ### ###'),
+      phone:     mobile(),
       email:     faker.internet.email({ firstName, lastName }).toLowerCase(),
       address:   `${faker.location.streetAddress()}, ${faker.location.city()} ${faker.location.state({ abbreviated: true })} ${faker.location.zipCode('####')}`,
       insurance: pick(INSURERS),
       nextOfKin: {
         name:     `${faker.person.firstName()} ${lastName}`,
         relation: pick(['Spouse', 'Parent', 'Sibling', 'Child', 'Partner']),
-        phone:    faker.phone.number('04## ### ###'),
+        phone:    mobile(),
       },
 
       // Clinical metadata

@@ -19,12 +19,12 @@ export const ROLE_PERMISSIONS = {
       'insurance', 'email', 'address', 'nextOfKin', 'gp', 'phone',
     ],
     rationale: {
-      allergies:        'Critical for safe treatment — anaphylaxis risk',
+      allergies:        'Critical for safe treatment - anaphylaxis risk',
       medications:      'Drug interaction checks before prescribing',
       vitals:           'Current clinical status for acute care',
       imaging:          'Injury assessment',
       psych:            'Not relevant to physical trauma treatment',
-      surgeries:        'Historical only — not needed for acute ER visit',
+      surgeries:        'Historical only - not needed for acute ER visit',
       labs:             'Not indicated for current presentation',
       insurance:        'No clinical function in ER context',
     },
@@ -43,11 +43,11 @@ export const ROLE_PERMISSIONS = {
     ],
     rationale: {
       vitals:      'Routine monitoring and recording',
-      medications: 'Administration checks — names and doses only',
+      medications: 'Administration checks - names and doses only',
       allergies:   'Safety during care delivery',
-      labs:        'Clinical interpretation — doctor scope only',
-      imaging:     'Radiological review — doctor scope only',
-      psych:       'Protected category — treating clinician only',
+      labs:        'Clinical interpretation - doctor scope only',
+      imaging:     'Radiological review - doctor scope only',
+      psych:       'Protected category - treating clinician only',
       surgeries:   'Historical data outside nursing scope',
     },
   },
@@ -67,10 +67,10 @@ export const ROLE_PERMISSIONS = {
       name:           'Required for scheduling and patient identification',
       insurance:      'Billing and administrative processing',
       nextOfKin:      'Emergency contact management',
-      diagnoses:      'Clinical data — no administrative function',
-      medications:    'Clinical data — no administrative function',
-      psych:          'Sensitive protected category — admin has no need',
-      vitals:         'Clinical monitoring — no administrative function',
+      diagnoses:      'Clinical data - no administrative function',
+      medications:    'Clinical data - no administrative function',
+      psych:          'Sensitive protected category - admin has no need',
+      vitals:         'Clinical monitoring - no administrative function',
     },
   },
 
@@ -86,12 +86,12 @@ export const ROLE_PERMISSIONS = {
       'nextOfKin', 'gp', 'admissionReason', 'phone',
     ],
     rationale: {
-      psych:       'Primary treatment scope — full access',
+      psych:       'Primary treatment scope - full access',
       medications: 'Physical medications outside psychiatric scope',
-      labs:        'Physical health data — outside scope',
-      surgeries:   'Physical history — outside scope',
-      vitals:      'Physical monitoring — outside scope',
-      allergies:   'Physical safety data — refer to treating GP',
+      labs:        'Physical health data - outside scope',
+      surgeries:   'Physical history - outside scope',
+      vitals:      'Physical monitoring - outside scope',
+      allergies:   'Physical safety data - refer to treating GP',
     },
   },
 
@@ -137,10 +137,10 @@ export function filterPatient(patient, role) {
   return filtered;
 }
 
-/** Express middleware — reject unauthenticated requests */
+/** Express middleware - reject unauthenticated requests */
 export function requireAuth(req, res, next) {
   if (!req.session?.user) {
     return res.status(401).json({ error: 'Authentication required' });
   }
-  next();
+  return next();
 }

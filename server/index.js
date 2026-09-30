@@ -1,52 +1,25 @@
-import express    from 'express';
-import session    from 'express-session';
-import cors       from 'cors';
-import path       from 'path';
-import { fileURLToPath } from 'url';
+import { createApp } from './app.js';
+import { config }    from './config.js';
+import { seedDb }    from './db.js';
+import { log }       from './logger.js';
 
-import { generatePatients } from './seed.js';
-import { authRouter }       from './routes/auth.js';
-import { patientsRouter }   from './routes/patients.js';
-import { auditRouter }      from './routes/audit.js';
+seedDb(config.seedCount);
+const app = createApp(config);
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const app  = express();
-const PORT = process.env.PORT || 3000;
-
-// ── In-memory database (seeded on startup) ────────────────────────────────────
-export const db = {
-  patients: generatePatients(20),
-  auditLog: [],
-};
-
-// ── Middleware ────────────────────────────────────────────────────────────────
-app.use(cors({ origin: true, credentials: true }));
-app.use(express.json());
-app.use(express.static(path.join(__dirname, '../public')));
-app.use(session({
-  secret:            'medvault-zero-trust-dev-secret',
-  resave:            false,
-  saveUninitialized: false,
-  cookie:            { maxAge: 1000 * 60 * 60 }, // 1 hour
-}));
-
-// ── API routes ────────────────────────────────────────────────────────────────
-app.use('/api/auth',     authRouter);
-app.use('/api/patients', patientsRouter);
-app.use('/api/audit',    auditRouter);
-
-// ── SPA fallback ──────────────────────────────────────────────────────────────
-app.get('*', (_req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
+const server = app.listen(config.port, () => {
+  log('info', 'medvault_started', {
+    port: config.port,
+    env: config.appEnv,
+    version: config.version,
+    commit: config.commit,
+  });
 });
 
-// ── Start ─────────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log('\n  ╔══════════════════════════════════════╗');
-  console.log('  ║   🔐  MEDVAULT  —  Zero Trust        ║');
-  console.log('  ║   ACUCyS × DSEC Hackathon 2026       ║');
-  console.log('  ╠══════════════════════════════════════╣');
-  console.log(`  ║   http://localhost:${PORT}               ║`);
-  console.log(`  ║   ${db.patients.length} patients seeded in memory   ║`);
-  console.log('  ╚══════════════════════════════════════╝\n');
-});
+// shut down nicely on docker stop so a redeploy doesnt cut off requests halfway
+function shutdown(signal) {
+  log('info', 'medvault_stopping', { signal });
+  server.close(() => process.exit(0));
+  setTimeout(() => process.exit(1), 10_000).unref();
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT',  () => shutdown('SIGINT'));

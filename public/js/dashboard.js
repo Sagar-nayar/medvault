@@ -1,5 +1,5 @@
 /**
- * Dashboard — topbar, patient list, search, logout
+ * Dashboard - topbar, patient list, search, logout
  */
 
 let _allPatients  = [];

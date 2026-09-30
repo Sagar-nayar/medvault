@@ -1,5 +1,5 @@
 /**
- * Audit log drawer — live access monitoring
+ * Audit log drawer - live access monitoring
  */
 
 let _auditPoll = null;

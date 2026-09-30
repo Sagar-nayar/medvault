@@ -15,8 +15,24 @@ function scanTransition(cb) {
   setTimeout(() => { cb(); setTimeout(() => line.remove(), 400); }, 640);
 }
 
+// shows which env + version youre looking at (staging vs prod) in the corner
+async function showBuildInfo() {
+  try {
+    const res  = await fetch('/health');
+    const info = await res.json();
+    const label = `${String(info.env).toUpperCase()} · v${info.version}`;
+    document.getElementById('brand-ver').textContent = `v${info.version}`;
+    const pill = document.getElementById('env-pill');
+    pill.textContent = label;
+    pill.dataset.env = info.env;
+  } catch {
+    // just cosmetic, doesnt matter if it fails
+  }
+}
+
 window.addEventListener('DOMContentLoaded', async () => {
   initLogin();
+  showBuildInfo();
 
   // Restore session if cookie is still valid
   try {

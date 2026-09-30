@@ -50,18 +50,23 @@ function buildPatientView(p, perms) {
 }
 
 /* ── Header ─────────────────────────────────────────────── */
+function headerMeta(p) {
+  const age = p.age === undefined || p.age === null ? null : `Age: ${p.age}${p.sex ?? ''}`;
+  return [
+    p.dob && `DOB: ${p.dob}`,
+    age,
+    p.mrn,
+    p.ward && `Ward: ${p.ward}`,
+    p.admittedAt && `Admitted: ${p.admittedAt}`,
+  ].filter(Boolean).map(text => `<span>${text}</span>`).join('');
+}
+
 function buildHeader(p, color) {
   return `
     <div class="pt-header" style="--accent:${color}">
       <div>
         <div class="pt-name">${p.name ?? 'Unknown'}</div>
-        <div class="pt-meta">
-          ${p.dob        ? `<span>DOB: ${p.dob}</span>` : ''}
-          ${p.age != null? `<span>Age: ${p.age}${p.sex ?? ''}</span>` : ''}
-          ${p.mrn        ? `<span>${p.mrn}</span>` : ''}
-          ${p.ward       ? `<span>Ward: ${p.ward}</span>` : ''}
-          ${p.admittedAt ? `<span>Admitted: ${p.admittedAt}</span>` : ''}
-        </div>
+        <div class="pt-meta">${headerMeta(p)}</div>
       </div>
       <div class="pt-ctx">
         <div class="pt-ctx-lbl">// TREATMENT CONTEXT</div>
@@ -76,7 +81,7 @@ function buildScopeBanner(perms) {
   const allowed = perms.allowed.filter(f => !['id'].includes(f));
   return `
     <div class="scope-banner">
-      <div class="scope-lbl">// ACCESS SCOPE — ${perms.role.toUpperCase()}</div>
+      <div class="scope-lbl">// ACCESS SCOPE - ${perms.role.toUpperCase()}</div>
       <div class="scope-chips">
         ${allowed.map(f => `<span class="chip chip-y">✓ ${f}</span>`).join('')}
         ${perms.denied.map(f => `<span class="chip chip-n">✕ ${f}</span>`).join('')}
@@ -86,9 +91,16 @@ function buildScopeBanner(perms) {
 }
 
 /* ── Card helpers ───────────────────────────────────────── */
+const CARD_TAGS = {
+  ok:   { cls: 'tag-ok',   text: '● GRANTED' },
+  warn: { cls: 'tag-warn', text: '⚠ GRANTED' },
+  deny: { cls: 'tag-deny', text: '✕ DENIED'  },
+};
+
 function card(title, body, status = 'ok') {
-  const cls  = status === 'ok' ? 'tag-ok' : status === 'warn' ? 'tag-warn' : 'tag-deny';
-  const text = status === 'ok' ? '● GRANTED' : status === 'warn' ? '⚠ GRANTED' : '✕ DENIED';
+  const tag  = CARD_TAGS[status] ?? CARD_TAGS.deny;
+  const cls  = tag.cls;
+  const text = tag.text;
   return `
     <div class="data-card">
       <div class="card-head">
@@ -131,16 +143,19 @@ function buildAllergies(p) {
   const hasSerious = list.some(a => ['SEVERE','ANAPHYLAXIS'].includes(a.severity));
   const body = list.length === 0
     ? row('Status', 'No known allergies on record', 'ok')
-    : `<div class="allergy-list">${list.map(a => `
+    : `<div class="allergy-list">${list.map(a => allergyItem(a)).join('')}</div>`;
+  return card('ALLERGIES', body, hasSerious ? 'warn' : 'ok');
+}
+
+function allergyItem(a) {
+  return `
         <div class="al-item">
           <div>
             <div class="al-name">${a.substance}</div>
             <div class="al-reaction">${a.reaction}</div>
           </div>
           <span class="al-sev al-${a.severity}">${a.severity}</span>
-        </div>`).join('')}</div>`;
-
-  return card('ALLERGIES', body, hasSerious ? 'warn' : 'ok');
+        </div>`;
 }
 
 function buildMedications(p) {
@@ -154,15 +169,26 @@ function buildMedications(p) {
   return card('CURRENT MEDICATIONS', body, 'ok');
 }
 
+// 'warn' if out of range, otherwise 'ok'
+function flag(isAbnormal) {
+  return isAbnormal ? 'warn' : 'ok';
+}
+
+function vitalFlags(v) {
+  return {
+    bpHi:   v.bp_systolic > 140,
+    spo2Lo: v.spo2 < 95,
+    tempHi: Number.parseFloat(v.temp) > 38,
+  };
+}
+
 function buildVitals(p) {
   if (p._denied?.includes('vitals'))
     return deniedCard('VITALS', 'Outside permitted scope for this role');
   if (!p.vitals) return '';
 
   const v = p.vitals;
-  const bpHi  = v.bp_systolic > 140;
-  const spo2Lo = v.spo2 < 95;
-  const tempHi = parseFloat(v.temp) > 38.0;
+  const { bpHi, spo2Lo, tempHi } = vitalFlags(v);
 
   const grid = `
     <div class="vitals-grid">
@@ -197,10 +223,11 @@ function buildVitals(p) {
         <div class="vbox-unit">/15</div>
       </div>
     </div>
-    ${row('Glucose', `${v.glucose} mmol/L`, parseFloat(v.glucose) > 10 ? 'warn' : 'ok')}
+    ${row('Glucose', `${v.glucose} mmol/L`, flag(Number.parseFloat(v.glucose) > 10))}
     ${row('Recorded', v.recordedAt)}
   `;
-  return card('VITALS', grid, bpHi || spo2Lo || tempHi ? 'warn' : 'ok');
+  const anyAbnormal = bpHi || spo2Lo || tempHi;
+  return card('VITALS', grid, anyAbnormal ? 'warn' : 'ok');
 }
 
 function buildImaging(p) {
@@ -212,7 +239,7 @@ function buildImaging(p) {
 
   const body = imgs.map(img => `
     <div style="padding:6px 0;border-bottom:1px solid var(--b1)">
-      ${row('Type',    `${img.type} — ${img.region}`)}
+      ${row('Type',    `${img.type} - ${img.region}`)}
       ${row('Finding', img.finding)}
       ${row('Date',    img.date)}
       ${row('By',      img.radiologist)}
@@ -228,14 +255,14 @@ function buildSurgeries(p) {
   if (!surg.length) return card('SURGICAL HISTORY', row('Status', 'No surgical history on record', ''), 'ok');
 
   const body = surg.map(s =>
-    row(String(s.year), `${s.procedure} <span style="color:var(--tx-lo);font-size:9px;font-family:var(--mono)">— ${s.surgeon}</span>`)
+    row(String(s.year), `${s.procedure} <span style="color:var(--tx-lo);font-size:9px;font-family:var(--mono)"> - ${s.surgeon}</span>`)
   ).join('');
   return card('SURGICAL HISTORY', body, 'ok');
 }
 
 function buildLabs(p) {
   if (p._denied?.includes('labs'))
-    return deniedCard('LAB RESULTS', 'Clinical interpretation data — outside this role\'s scope');
+    return deniedCard('LAB RESULTS', 'Clinical interpretation data - outside this role\'s scope');
   if (!p.labs) return '';
 
   const l = p.labs;
@@ -251,18 +278,21 @@ function buildLabs(p) {
   return card('LAB RESULTS', body, 'ok');
 }
 
+const RISK_STATUS = { LOW: 'ok', MEDIUM: 'warn', HIGH: 'crit' };
+
 function buildPsych(p) {
   if (p._denied?.includes('psych'))
-    return deniedCard('PSYCHIATRIC RECORDS', 'Protected category — treating mental health staff only');
+    return deniedCard('PSYCHIATRIC RECORDS', 'Protected category - treating mental health staff only');
   if (!p.psych) return '';
 
   const ps = p.psych;
   const meds = (ps.medications ?? []).map(m => row(m.name, `${m.dose} ${m.freq}`)).join('');
+  const dx = ps.primaryDiagnosis ?? {};
   const body = [
-    row('Primary Dx',  `${ps.primaryDiagnosis?.name ?? '—'} <span style="font-family:var(--mono);font-size:9px;color:var(--tx-lo)">${ps.primaryDiagnosis?.code ?? ''}</span>`),
+    row('Primary Dx',  `${dx.name ?? ' - '} <span style="font-family:var(--mono);font-size:9px;color:var(--tx-lo)">${dx.code ?? ''}</span>`),
     row('Sessions',    `${ps.sessionCount} (ongoing)`),
     row('Last session',ps.lastSession),
-    row('Risk level',  ps.riskLevel, ps.riskLevel === 'LOW' ? 'ok' : ps.riskLevel === 'HIGH' ? 'crit' : 'warn'),
+    row('Risk level',  ps.riskLevel, RISK_STATUS[ps.riskLevel] ?? 'warn'),
     row('Therapist',   ps.therapist),
     row('Notes',       ps.notes),
     meds ? `<div class="card-sub">PSYCH MEDICATIONS</div>${meds}` : '',
@@ -270,20 +300,32 @@ function buildPsych(p) {
   return card('PSYCHIATRIC RECORDS', body, 'ok');
 }
 
-function buildAdmin(p) {
-  if (!p.insurance && !p.nextOfKin && !p.phone) return '';
-  if (p._denied?.includes('insurance')) return '';
+function optionalRow(label, value) {
+  return value ? row(label, value) : '';
+}
 
-  const nok = p.nextOfKin;
-  const body = [
-    p.insurance ? row('Insurance',  p.insurance)  : '',
-    p.phone     ? row('Phone',      p.phone)       : '',
-    p.email     ? row('Email',      p.email)       : '',
-    p.address   ? row('Address',    p.address)     : '',
-    nok ? `<div class="card-sub">NEXT OF KIN</div>
+function nextOfKinBlock(nok) {
+  if (!nok) return '';
+  return `<div class="card-sub">NEXT OF KIN</div>
            ${row('Name',     nok.name)}
            ${row('Relation', nok.relation)}
-           ${row('Phone',    nok.phone)}` : '',
+           ${row('Phone',    nok.phone)}`;
+}
+
+function hasAdminData(p) {
+  return Boolean(p.insurance || p.nextOfKin || p.phone);
+}
+
+function buildAdmin(p) {
+  if (!hasAdminData(p)) return '';
+  if (p._denied?.includes('insurance')) return '';
+
+  const body = [
+    optionalRow('Insurance', p.insurance),
+    optionalRow('Phone',     p.phone),
+    optionalRow('Email',     p.email),
+    optionalRow('Address',   p.address),
+    nextOfKinBlock(p.nextOfKin),
   ].join('');
   return card('ADMINISTRATIVE', body, 'ok');
 }
