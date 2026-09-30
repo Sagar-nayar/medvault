@@ -21,9 +21,10 @@ async function initDashboard(user) {
   // Root CSS accent (picked up by patient view)
   document.documentElement.style.setProperty('--role-accent', color);
 
-  document.getElementById('session-meta').innerHTML =
-    `SESSION: ${new Date(user.loginAt).toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'})}<br>` +
-    `${user.context}`;
+  // context is typed by the user, so it goes in as text, never as HTML (was a DOM XSS)
+  const meta = document.getElementById('session-meta');
+  const loginTime = new Date(user.loginAt).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
+  meta.replaceChildren(`SESSION: ${loginTime}`, document.createElement('br'), user.context);
 
   // Load patient list
   _allPatients = await API.patients.list();
@@ -64,13 +65,19 @@ function renderList(patients) {
   }
 
   list.innerHTML = patients.map(p => `
-    <div class="p-item" data-id="${p.id}" onclick="loadPatient('${p.id}')">
+    <div class="p-item" data-id="${p.id}">
       <div class="p-name">${p.name}</div>
       <div class="p-meta"><span>${p.age}${p.sex}</span><span>${p.mrn}</span></div>
       <span class="p-ward">${p.ward}</span>
     </div>
   `).join('');
 }
+
+// one click handler on the list instead of inline onclick="" (inline js is blocked by our CSP)
+document.getElementById('patient-list').addEventListener('click', e => {
+  const item = e.target.closest('.p-item');
+  if (item) loadPatient(item.dataset.id);
+});
 
 function resetDashboard() {
   _allPatients = [];

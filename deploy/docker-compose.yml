@@ -17,6 +17,12 @@ services:
     mem_limit: ${MEMORY_LIMIT:-256m}
     security_opt:
       - no-new-privileges:true
+    # container filesystem is read-only, only /tmp is writable
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
     networks:
       - devops-net
 

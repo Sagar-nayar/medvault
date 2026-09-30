@@ -10,7 +10,29 @@ export function loadConfig(env = process.env) {
     seedCount:  Number(env.SEED_COUNT) || 20,
     logLevel:   env.LOG_LEVEL || 'info',
     sessionTtlMinutes: Number(env.SESSION_TTL_MINUTES) || 60,
+    ...loadSecurityConfig(env),
   };
+}
+
+// security settings (added after the first Security stage run flagged them)
+function loadSecurityConfig(env) {
+  return {
+    sessionSecret: resolveSessionSecret(env),
+    corsOrigins:   (env.CORS_ORIGINS || 'http://localhost:3000').split(',').map(o => o.trim()),
+    loginRateLimitPerMinute: Number(env.LOGIN_RATE_LIMIT_PER_MINUTE) || 30,
+    secureCookies: env.SECURE_COOKIES === 'true',
+  };
+}
+
+// real environments MUST get the secret from outside (jenkins credential -> env var).
+// only local dev/test are allowed a throwaway default
+function resolveSessionSecret(env) {
+  const appEnv = env.APP_ENV || 'development';
+  if (env.SESSION_SECRET && env.SESSION_SECRET.length >= 16) return env.SESSION_SECRET;
+  if (['staging', 'production'].includes(appEnv)) {
+    throw new Error(`SESSION_SECRET (16+ chars) is required when APP_ENV=${appEnv}`);
+  }
+  return `dev-only-${appEnv}-secret-change-me`;
 }
 
 export const config = loadConfig();

@@ -24,13 +24,16 @@ function initLogin() {
   const grid = document.getElementById('role-grid');
   grid.innerHTML = Object.entries(ROLE_DEFS).map(([key, r]) => `
     <button class="role-card" data-role="${key}"
-            style="--rc:${r.color}"
-            onclick="selectRole('${key}')">
+            style="--rc:${r.color}">
       <span class="rc-icon">${r.icon}</span>
       <span class="rc-name">${r.name}</span>
       <span class="rc-dept">${r.dept}</span>
     </button>
   `).join('');
+  grid.addEventListener('click', e => {
+    const card = e.target.closest('.role-card');
+    if (card) selectRole(card.dataset.role);
+  });
 }
 
 function selectRole(role) {

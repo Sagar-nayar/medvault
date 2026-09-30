@@ -1,6 +1,8 @@
 import express from 'express';
 import session from 'express-session';
 import cors    from 'cors';
+import helmet  from 'helmet';
+import rateLimit from 'express-rate-limit';
 import path    from 'path';
 import { fileURLToPath } from 'url';
 
@@ -21,14 +23,50 @@ export function createApp(config = defaultConfig) {
   appInfo.set({ version: config.version, env: config.appEnv, commit: config.commit }, 1);
 
   app.use(metricsMiddleware);
-  app.use(cors({ origin: true, credentials: true }));
-  app.use(express.json());
+
+  // security headers: CSP, no sniffing, no framing (clickjacking), hides X-Powered-By
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc:  ["'self'"],
+        styleSrc:   ["'self'", "'unsafe-inline'"],
+        imgSrc:     ["'self'", 'data:'],
+        connectSrc: ["'self'"],
+        frameAncestors: ["'none'"],
+        upgradeInsecureRequests: null, // demo runs on plain http://localhost
+      },
+    },
+  }));
+
+  // only our own front end is allowed to call the API with cookies
+  app.use(cors({
+    origin: (origin, cb) => cb(null, !origin || config.corsOrigins.includes(origin)),
+    credentials: true,
+  }));
+
+  app.use(express.json({ limit: '10kb' }));
   app.use(express.static(path.join(__dirname, '../public')));
   app.use(session({
-    secret:            'medvault-zero-trust-dev-secret',
+    name:              'medvault.sid',
+    secret:            config.sessionSecret,
     resave:            false,
     saveUninitialized: false,
-    cookie:            { maxAge: 1000 * 60 * config.sessionTtlMinutes },
+    cookie: {
+      maxAge:   1000 * 60 * config.sessionTtlMinutes,
+      httpOnly: true,     // js cant read the cookie
+      sameSite: 'strict', // cookie not sent on cross-site requests (CSRF)
+      secure:   config.secureCookies, // turn on once its behind HTTPS
+    },
+  }));
+
+  // slow down anyone hammering the login endpoint
+  app.use('/api/auth/login', rateLimit({
+    windowMs: 60 * 1000,
+    limit: config.loginRateLimitPerMinute,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    message: { error: 'Too many login attempts, try again in a minute' },
   }));
 
   app.use('/',             healthRouter(config));

@@ -7,6 +7,8 @@ export const testConfig = loadConfig({
   APP_VERSION: '9.9.9',
   GIT_COMMIT: 'testsha',
   SESSION_SECRET: 'test-only-secret-not-used-in-any-real-environment',
+  LOGIN_RATE_LIMIT_PER_MINUTE: '100000',
+  CORS_ORIGINS: 'http://localhost:3000',
 });
 
 export const app = createApp(testConfig);

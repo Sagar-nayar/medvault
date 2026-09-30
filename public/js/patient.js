@@ -70,7 +70,7 @@ function buildHeader(p, color) {
       </div>
       <div class="pt-ctx">
         <div class="pt-ctx-lbl">// TREATMENT CONTEXT</div>
-        <div class="pt-ctx-val" style="color:${color}">${_currentUser?.context ?? 'General access'}</div>
+        <div class="pt-ctx-val" style="color:${color}">${escapeHtml(_currentUser?.context ?? 'General access')}</div>
       </div>
     </div>
   `;
@@ -88,6 +88,13 @@ function buildScopeBanner(perms) {
       </div>
     </div>
   `;
+}
+
+// escape anything the user typed before it goes into HTML
+function escapeHtml(text) {
+  return String(text)
+    .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 }
 
 /* ── Card helpers ───────────────────────────────────────── */

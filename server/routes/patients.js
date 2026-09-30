@@ -65,7 +65,9 @@ patientsRouter.get('/:id/field/:field', (req, res) => {
 
   const resource = `PATIENT:${patient.id}:${field.toUpperCase()}`;
 
-  if (perms.deniedFields.includes(field)) {
+  // deny by default: only fields on the allow-list get through.
+  // (this used to check the deny-list, so any field nobody remembered to list was readable)
+  if (!perms.allowedFields.includes(field)) {
     audit(req, {
       action: 'FIELD_ACCESS_ATTEMPT', resource, status: 'DENIED', severity: 'HIGH', field,
       details: `${perms.label} attempted to access restricted field: ${field}`,

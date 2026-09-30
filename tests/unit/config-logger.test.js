@@ -12,6 +12,7 @@ describe('loadConfig()', () => {
     const cfg = loadConfig({
       APP_ENV: 'production', APP_VERSION: '1.1.7', GIT_COMMIT: 'abc1234',
       PORT: '8080', SEED_COUNT: '50', SESSION_TTL_MINUTES: '15',
+      SESSION_SECRET: 'unit-test-secret-1234567890',
     });
     expect(cfg).toMatchObject({
       appEnv: 'production', version: '1.1.7', commit: 'abc1234',
