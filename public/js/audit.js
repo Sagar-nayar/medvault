@@ -9,7 +9,7 @@ function toggleAudit() {
   const btn    = document.getElementById('audit-btn');
   const open   = drawer.classList.toggle('open');
   btn.classList.toggle('active', open);
-  if (open) refreshAudit();
+  if (open) refreshAudit().catch(logAuditError);
 }
 
 function closeAudit() {
@@ -54,10 +54,15 @@ function renderFeed(entries) {
   `).join('');
 }
 
+// a failed refresh shouldnt kill the poll, just note it in the console
+function logAuditError(err) {
+  console.error('audit refresh failed', err);
+}
+
 function startAuditPoll() {
   _auditPoll = setInterval(() => {
     if (document.getElementById('audit-drawer').classList.contains('open')) {
-      refreshAudit();
+      refreshAudit().catch(logAuditError);
     }
   }, 4000);
 }

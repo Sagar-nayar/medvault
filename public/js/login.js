@@ -64,7 +64,7 @@ async function doLogin() {
     if (result.ok) {
       scanTransition(() => {
         showScreen('dashboard-screen');
-        initDashboard(result.user);
+        initDashboard(result.user).catch(err => console.error('dashboard failed to load', err));
       });
     } else {
       throw new Error('login failed');

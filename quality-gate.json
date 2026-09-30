@@ -1,13 +1,42 @@
 {
-  "_comment": "our own quality gate. scripts/quality-gate.mjs checks SonarCloud results against these after every scan and fails the build if any is broken",
+  "_comment": "our own quality gate. scripts/quality-gate.mjs checks SonarCloud results against these after every scan and fails the build if any is broken. vulnerabilities are tracked here but gated in the Security stage, since this stage is about code health",
   "thresholds": {
-    "coverage":                 { "op": ">=", "value": 80,  "why": "untested code = risky changes" },
-    "duplicated_lines_density": { "op": "<=", "value": 3,   "why": "copy paste means fixing bugs twice" },
-    "bugs":                     { "op": "<=", "value": 0,   "why": "no known bugs ship" },
-    "vulnerabilities":          { "op": "<=", "value": 0,   "why": "security issues are handled in the Security stage, none allowed here" },
-    "sqale_rating":             { "op": "<=", "value": 1,   "why": "maintainability rating must be A (1 = A, 5 = E)" },
-    "reliability_rating":       { "op": "<=", "value": 1,   "why": "reliability rating must be A" },
-    "code_smells":              { "op": "<=", "value": 25,  "why": "cap on tech debt so it cant quietly pile up" }
+    "coverage": {
+      "op": ">=",
+      "value": 80,
+      "why": "untested code = risky changes"
+    },
+    "duplicated_lines_density": {
+      "op": "<=",
+      "value": 3,
+      "why": "copy paste means fixing bugs twice"
+    },
+    "bugs": {
+      "op": "<=",
+      "value": 0,
+      "why": "no known bugs ship"
+    },
+    "sqale_rating": {
+      "op": "<=",
+      "value": 1,
+      "why": "maintainability rating must be A (1 = A, 5 = E)"
+    },
+    "reliability_rating": {
+      "op": "<=",
+      "value": 1,
+      "why": "reliability rating must be A"
+    },
+    "code_smells": {
+      "op": "<=",
+      "value": 25,
+      "why": "cap on tech debt so it cant quietly pile up"
+    }
   },
-  "tracked": ["ncloc", "cognitive_complexity", "security_hotspots", "sqale_index"]
+  "tracked": [
+    "vulnerabilities",
+    "ncloc",
+    "cognitive_complexity",
+    "security_hotspots",
+    "sqale_index"
+  ]
 }

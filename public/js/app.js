@@ -32,14 +32,14 @@ async function showBuildInfo() {
 
 window.addEventListener('DOMContentLoaded', async () => {
   initLogin();
-  showBuildInfo();
+  void showBuildInfo(); // fire and forget on purpose, it handles its own errors
 
   // Restore session if cookie is still valid
   try {
     const user = await API.auth.me();
     if (user?.role) {
       showScreen('dashboard-screen');
-      initDashboard(user);
+      await initDashboard(user);
     } else {
       showScreen('login-screen');
     }
