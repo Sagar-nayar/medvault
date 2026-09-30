@@ -1,8 +1,8 @@
-# 🔐 MedVault — Zero Trust Patient Access System
+# 🔐 MedVault - Zero Trust Patient Access System
 
 > **ACUCyS × DSEC Hackathon 2026** · *"Trust No One, Treat Everyone"*
 
-A zero trust patient data access system for healthcare. Every clinician sees **only the patient data relevant to their role and treatment context** — nothing more, nothing less.
+A zero trust patient data access system for healthcare. Every clinician sees **only the patient data relevant to their role and treatment context** - nothing more, nothing less.
 
 ---
 
@@ -10,7 +10,7 @@ A zero trust patient data access system for healthcare. Every clinician sees **o
 
 In most hospital systems, once authenticated, a clinician can access far more data than needed. A physio might view psychiatric notes. An admin scheduler might read lab results. This over-permissioning creates real risk: one compromised account exposes everything.
 
-**Zero trust** flips the model — trust no one by default, then grant minimum necessary access based on role and context.
+**Zero trust** flips the model - trust no one by default, then grant minimum necessary access based on role and context.
 
 ---
 
@@ -37,34 +37,64 @@ Every access attempt is **logged, timestamped, and auditable** in real time.
 | Patient data | `@faker-js/faker` (20 patients generated on startup) |
 | Frontend | Vanilla HTML / CSS / JS |
 | Fonts | Syne + JetBrains Mono |
+| Tests | Vitest + Supertest |
+| Metrics | prom-client (Prometheus) |
 
-No database required — everything runs in memory.
+No database required - everything runs in memory.
 
 ---
 
-## Getting Started
+## DevOps pipeline (SIT223 7.3HD)
 
-### Requirements
-- Node.js v18+
-- npm v9+
+```mermaid
+flowchart LR
+  GH[GitHub push] -->|poll every 2 min| B[Build<br/>docker image v1.1.N<br/>pushed to registry]
+  B --> T[Test<br/>unit + integration<br/>coverage gate]
+  T --> Q[Code Quality<br/>ESLint + SonarCloud<br/>custom gate]
+  Q --> S[Security<br/>npm audit + Semgrep + Trivy<br/>in parallel]
+  S --> D[Deploy<br/>staging :3001<br/>smoke tests + rollback]
+  D --> R[Release<br/>production :3000<br/>git tag + GitHub release]
+  R --> M[Monitoring<br/>Prometheus + Grafana<br/>alerts to Discord]
+```
 
-### Install & Run
+| Stage | Tools | Gate (build fails if...) |
+|---|---|---|
+| Build | npm, Docker, local registry | image doesnt build or push |
+| Test | Vitest, Supertest | any test fails or coverage < 85% lines |
+| Code Quality | ESLint, SonarCloud, `scripts/quality-gate.mjs` | any lint warning, or SonarCloud metrics break `quality-gate.json` |
+| Security | npm audit, Semgrep (custom rules), Trivy 0.69.3 | HIGH/CRITICAL fixable vuln, secret, root container, or blocking SAST finding |
+| Deploy | Docker Compose, `scripts/deploy.sh` | staging never gets healthy (auto rollback) or smoke tests fail |
+| Release | Docker tags, git tags, GitHub Releases API | prod unhealthy (auto rollback) or prod smoke tests fail |
+| Monitoring | Prometheus, Alertmanager, Grafana, Blackbox exporter | prod isnt being scraped or no alert rules loaded |
+
+### URLs once it's running
+
+| What | URL |
+|---|---|
+| Jenkins | http://localhost:8080 |
+| MedVault production | http://localhost:3000 |
+| MedVault staging | http://localhost:3001 |
+| Grafana | http://localhost:3030 |
+| Prometheus | http://localhost:9090 |
+| Alertmanager | http://localhost:9093 |
+| Docker registry | http://localhost:5000/v2/medvault/tags/list |
+
+### Run it
 
 ```bash
-git clone https://github.com/yourusername/medvault.git
-cd medvault
+cp infra/.env.example infra/.env      # fill in the tokens
+docker compose -f infra/docker-compose.yml up -d --build
+# open http://localhost:8080, New Item > Pipeline > "Pipeline script from SCM" > this repo
+```
+
+### Run the app on its own
+
+```bash
 npm install
-npm start
+npm start          # http://localhost:3000
+npm test           # unit + integration tests
+npm run lint
 ```
-
-Open **http://localhost:3000**
-
-For development with auto-reload:
-```bash
-npm run dev
-```
-
----
 
 ## Project Structure
 
@@ -74,7 +104,7 @@ medvault/
 │   ├── index.js                    # Express entry point + in-memory DB
 │   ├── seed.js                     # Faker patient data generator
 │   ├── middleware/
-│   │   └── accessControl.js        # Zero trust RBAC — the core logic
+│   │   └── accessControl.js        # Zero trust RBAC - the core logic
 │   └── routes/
 │       ├── auth.js                 # Login / logout / session
 │       ├── patients.js             # Patient API (role-filtered responses)
@@ -109,7 +139,7 @@ medvault/
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/api/patients` | Patient list (safe fields only) |
-| `GET` | `/api/patients/:id` | Full record — server filters by role |
+| `GET` | `/api/patients/:id` | Full record - server filters by role |
 | `GET` | `/api/patients/:id/field/:field` | Single field access (logged + enforced) |
 | `GET` | `/api/patients/:id/permissions` | What this role can/cannot see |
 
@@ -123,11 +153,11 @@ medvault/
 
 ## Zero Trust Design Principles Applied
 
-1. **Deny by default** — if a field isn't in `allowedFields`, the server never sends it
-2. **Minimum necessary access** — each role gets only what their function requires
-3. **Context recording** — treatment context is captured with every session
-4. **Full audit trail** — every view, field access, and denial is logged with role + timestamp
-5. **Server-side enforcement** — filtering happens on the server, not the client
+1. **Deny by default** - if a field isn't in `allowedFields`, the server never sends it
+2. **Minimum necessary access** - each role gets only what their function requires
+3. **Context recording** - treatment context is captured with every session
+4. **Full audit trail** - every view, field access, and denial is logged with role + timestamp
+5. **Server-side enforcement** - filtering happens on the server, not the client
 
 ---
 
@@ -142,3 +172,7 @@ medvault/
 ---
 
 *Built for ACUCyS × DSEC Hackathon 2026. "Trust No One, Treat Everyone."*
+
+---
+
+*AI assistance: parts of the pipeline, tests and configuration were built with help from Claude (Anthropic). See the report for details.*

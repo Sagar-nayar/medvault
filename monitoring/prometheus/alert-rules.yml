@@ -1,0 +1,64 @@
+# alert rules. severity decides where alertmanager sends it, runbook says what to do about it
+groups:
+  - name: medvault-availability
+    rules:
+      - alert: MedVaultDown
+        expr: up{job="medvault-production"} == 0
+        for: 20s
+        labels: { severity: critical, team: medvault }
+        annotations:
+          summary: "MedVault production is DOWN"
+          description: "Prometheus cant scrape medvault-production for 20s+. Clinicians cant reach patient records."
+          runbook: "docker ps -a | grep medvault; docker logs medvault-production; rerun Jenkins or scripts/rollback.sh production"
+
+      - alert: HealthCheckFailing
+        expr: probe_success{job="blackbox-production"} == 0
+        for: 30s
+        labels: { severity: critical, team: medvault }
+        annotations:
+          summary: "/health check failing on production"
+          description: "Blackbox probe of http://medvault-production:3000/health is failing."
+          runbook: "curl http://localhost:3000/health; check container health with docker inspect"
+
+  - name: medvault-performance
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{job="medvault-production",status=~"5.."}[1m]))
+            / clamp_min(sum(rate(http_requests_total{job="medvault-production"}[1m])), 0.001) > 0.05
+        for: 1m
+        labels: { severity: warning, team: medvault }
+        annotations:
+          summary: "More than 5% of production requests are failing (5xx)"
+          description: "Error rate is {{ $value | humanizePercentage }}."
+          runbook: "docker logs medvault-production | grep error; compare with last release annotation in Grafana"
+
+      - alert: SlowResponses
+        expr: |
+          histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{job="medvault-production"}[2m]))) > 0.5
+        for: 2m
+        labels: { severity: warning, team: medvault }
+        annotations:
+          summary: "p95 latency above 500ms on production"
+          description: "95th percentile response time is {{ $value | humanizeDuration }}."
+          runbook: "check CPU/memory panels in Grafana, look for a traffic spike"
+
+      - alert: HighMemoryUsage
+        expr: medvault_process_resident_memory_bytes{job="medvault-production"} > 300 * 1024 * 1024
+        for: 2m
+        labels: { severity: warning, team: medvault }
+        annotations:
+          summary: "Production memory above 300MB (limit is 384MB)"
+          description: "Resident memory is {{ $value | humanize1024 }}B. The container will be OOM killed at 384MB."
+          runbook: "look for a leak, restart via redeploy, raise MEMORY_LIMIT in config/production.env if legit"
+
+  - name: medvault-security
+    rules:
+      - alert: SuspiciousAccessDenials
+        expr: sum(increase(medvault_access_denied_total{job="medvault-production"}[1m])) > 10
+        for: 0s
+        labels: { severity: critical, team: security }
+        annotations:
+          summary: "Burst of denied patient-record access attempts"
+          description: "{{ $value | humanize }} restricted-field requests were denied in the last minute. Could be a compromised account or insider snooping."
+          runbook: "open the MedVault audit log, filter status=DENIED, find the role/session, lock the account"

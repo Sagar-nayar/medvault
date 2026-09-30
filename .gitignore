@@ -1,4 +1,10 @@
 node_modules/
 .env
+infra/.env
 .DS_Store
 *.log
+coverage/
+reports/
+dist/
+.scannerwork/
+.npm/

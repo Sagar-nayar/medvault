@@ -1,0 +1,56 @@
+# monitoring stack. jenkins deploys this in the Monitoring stage.
+# all config is COPY'd into the images (see each Dockerfile) because jenkins runs inside docker
+# and bind-mounting files from its workspace doesnt work through the docker socket
+services:
+  prometheus:
+    build: ./prometheus
+    image: medvault-prometheus:local
+    container_name: prometheus
+    restart: unless-stopped
+    ports: ["9090:9090"]
+    volumes: [prometheus_data:/prometheus]
+    mem_limit: 300m
+    networks: [devops-net]
+
+  alertmanager:
+    build: ./alertmanager
+    image: medvault-alertmanager:local
+    container_name: alertmanager
+    restart: unless-stopped
+    ports: ["9093:9093"]
+    environment:
+      # injected from the jenkins credential at deploy time, never committed to git
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:?DISCORD_WEBHOOK_URL is required}
+    mem_limit: 64m
+    networks: [devops-net]
+
+  blackbox:
+    build: ./blackbox
+    image: medvault-blackbox:local
+    container_name: blackbox
+    restart: unless-stopped
+    mem_limit: 64m
+    networks: [devops-net]
+
+  grafana:
+    build: ./grafana
+    image: medvault-grafana:local
+    container_name: grafana
+    restart: unless-stopped
+    ports: ["3030:3000"]
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:?GRAFANA_PASSWORD is required}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/medvault.json
+    volumes: [grafana_data:/var/lib/grafana]
+    mem_limit: 256m
+    networks: [devops-net]
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  devops-net:
+    external: true

@@ -1,0 +1,31 @@
+# who gets told about what. critical = straight away, warning = batched a bit
+route:
+  receiver: discord-team
+  group_by: [alertname, severity]
+  group_wait: 10s
+  group_interval: 1m
+  repeat_interval: 1h
+  routes:
+    - matchers: [severity="critical"]
+      receiver: discord-team
+      group_wait: 5s
+    - matchers: [severity="warning"]
+      receiver: discord-team
+      group_wait: 30s
+
+# if the app is down, dont also spam about the health check failing
+inhibit_rules:
+  - source_matchers: [alertname="MedVaultDown"]
+    target_matchers: [alertname="HealthCheckFailing"]
+
+receivers:
+  - name: discord-team
+    discord_configs:
+      - webhook_url: "__DISCORD_WEBHOOK_URL__"
+        send_resolved: true
+        title: '{{ if eq .Status "firing" }}[FIRING]{{ else }}[RESOLVED]{{ end }} {{ .CommonLabels.alertname }} ({{ .CommonLabels.severity }})'
+        message: |-
+          {{ range .Alerts }}**{{ .Annotations.summary }}**
+          {{ .Annotations.description }}
+          Runbook: {{ .Annotations.runbook }}
+          {{ end }}

@@ -1,0 +1,86 @@
+# Custom Semgrep rules for MedVault (run in the Jenkins "Security" stage).
+# Severity ERROR blocks the pipeline; WARNING is reported but does not block.
+rules:
+  - id: medvault-hardcoded-session-secret
+    languages: [javascript]
+    severity: ERROR
+    message: >-
+      express-session secret is hard-coded. Anyone with the source code can forge
+      session cookies and impersonate any clinical role. Load it from an
+      environment variable / secret store instead (e.g. process.env.SESSION_SECRET).
+    metadata:
+      cwe: "CWE-798: Use of Hard-coded Credentials"
+      owasp: "A07:2021 - Identification and Authentication Failures"
+      confidence: HIGH
+    pattern-either:
+      - pattern: 'session({..., secret: "...", ...})'
+      - pattern: |
+          $OPTS = {..., secret: "...", ...};
+          ...
+          session($OPTS);
+
+  - id: medvault-cors-reflects-any-origin-with-credentials
+    languages: [javascript]
+    severity: ERROR
+    message: >-
+      CORS reflects ANY Origin while allowing credentials. A malicious website
+      visited by a logged-in clinician could read patient data through the
+      clinician's session cookie. Restrict `origin` to an explicit allow-list.
+    metadata:
+      cwe: "CWE-942: Permissive Cross-domain Policy with Untrusted Domains"
+      owasp: "A05:2021 - Security Misconfiguration"
+      confidence: HIGH
+    pattern-either:
+      - pattern: 'cors({..., origin: true, ..., credentials: true, ...})'
+      - pattern: 'cors({..., credentials: true, ..., origin: true, ...})'
+      - pattern: 'cors({..., origin: "*", ..., credentials: true, ...})'
+
+  - id: medvault-express-missing-security-headers
+    languages: [javascript]
+    severity: ERROR
+    message: >-
+      Express app created without helmet(). Security headers (CSP, X-Frame-Options,
+      HSTS, X-Content-Type-Options) are missing and X-Powered-By leaks the framework.
+    metadata:
+      cwe: "CWE-693: Protection Mechanism Failure"
+      owasp: "A05:2021 - Security Misconfiguration"
+    patterns:
+      - pattern-inside: |
+          function $F(...) { ... }
+      - pattern: $APP = express()
+      - pattern-not-inside: |
+          $APP = express();
+          ...
+          $APP.use(..., helmet(...), ...);
+      - pattern-not-inside: |
+          $APP = express();
+          ...
+          $APP.use(helmet(...));
+
+  - id: medvault-denylist-authorization
+    languages: [javascript]
+    severity: WARNING
+    message: >-
+      Authorization decided with a DENY-list (`deniedFields.includes`). Any field
+      that is not explicitly listed (e.g. a new column added later) is allowed by
+      default, which violates zero-trust "deny by default". Check the allow-list instead.
+    metadata:
+      cwe: "CWE-285: Improper Authorization"
+      owasp: "A01:2021 - Broken Access Control"
+    pattern: |
+      if ($PERMS.deniedFields.includes($FIELD)) { ... }
+
+  - id: medvault-dom-xss-user-context
+    languages: [javascript]
+    severity: ERROR
+    message: >-
+      User-supplied treatment context is written into the page with innerHTML /
+      a template string without escaping (DOM-based XSS). Use textContent or escape it.
+    metadata:
+      cwe: "CWE-79: Cross-site Scripting"
+      owasp: "A03:2021 - Injection"
+    pattern-either:
+      - pattern: '$EL.innerHTML = `...${$USER.context}...`'
+      - pattern: '$EL.innerHTML = `...` + `...${$USER.context}...`'
+      - pattern: '$EL.innerHTML = $X + `...${$USER.context}...`'
+      - pattern: '`...${$USER?.context ?? $DEFAULT}...`'

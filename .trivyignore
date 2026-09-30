@@ -1,0 +1,5 @@
+# Accepted risks / false positives for Trivy.
+# Format: <ID>  then a comment saying WHY and until WHEN (exp:YYYY-MM-DD makes it expire automatically).
+# Example:
+# CVE-2099-00000 exp:2026-12-31
+#   reason: only reachable via the npm CLI, which is removed from the runtime image

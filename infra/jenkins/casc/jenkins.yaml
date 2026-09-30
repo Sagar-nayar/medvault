@@ -1,0 +1,54 @@
+# Jenkins configuration as code. every secret comes from infra/.env, nothing is clicked in by hand
+jenkins:
+  systemMessage: "MedVault CI/CD. Jenkins is configured as code (infra/jenkins/casc/jenkins.yaml)"
+  numExecutors: 2
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_ID}"
+          password: "${JENKINS_ADMIN_PASSWORD}"
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - string:
+              scope: GLOBAL
+              id: sonarcloud-token
+              description: SonarCloud analysis token
+              secret: "${SONAR_TOKEN}"
+          - usernamePassword:
+              scope: GLOBAL
+              id: github-pat
+              description: GitHub token for pushing release tags
+              username: "${GITHUB_USERNAME}"
+              password: "${GITHUB_TOKEN}"
+          - string:
+              scope: GLOBAL
+              id: discord-webhook
+              description: Discord webhook for alerts + build notifications
+              secret: "${DISCORD_WEBHOOK_URL}"
+          - string:
+              scope: GLOBAL
+              id: session-secret-staging
+              description: MedVault SESSION_SECRET (staging)
+              secret: "${SESSION_SECRET_STAGING}"
+          - string:
+              scope: GLOBAL
+              id: session-secret-production
+              description: MedVault SESSION_SECRET (production)
+              secret: "${SESSION_SECRET_PRODUCTION}"
+          - usernamePassword:
+              scope: GLOBAL
+              id: grafana-admin
+              description: Grafana admin login
+              username: admin
+              password: "${GRAFANA_ADMIN_PASSWORD}"
+
+unclassified:
+  location:
+    url: "http://localhost:8080/"
