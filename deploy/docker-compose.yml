@@ -1,0 +1,25 @@
+# Infrastructure-as-code for ONE MedVault environment.
+# Used by scripts/deploy.sh for both staging and production:
+#   docker compose -p medvault-<env> --env-file config/<env>.env -f deploy/docker-compose.yml up -d
+services:
+  medvault:
+    image: ${REGISTRY:-localhost:5000}/medvault:${IMAGE_TAG:?IMAGE_TAG is required}
+    container_name: medvault-${APP_ENV:?APP_ENV is required}
+    restart: unless-stopped
+    env_file:
+      - ../config/${APP_ENV}.env
+    environment:
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET must come from Jenkins credentials}
+    ports:
+      - "${HOST_PORT}:3000"
+    labels:
+      com.medvault.environment: ${APP_ENV}
+    mem_limit: ${MEMORY_LIMIT:-256m}
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - devops-net
+
+networks:
+  devops-net:
+    external: true
