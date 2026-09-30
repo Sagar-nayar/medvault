@@ -176,3 +176,4 @@ medvault/
 ---
 
 *AI assistance: parts of the pipeline, tests and configuration were built with help from Claude (Anthropic). See the report for details.*
+
